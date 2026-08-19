@@ -13,6 +13,7 @@ const (
 	StrategySSI         StrategyType = "SSI"
 	StrategyPessimistic StrategyType = "PESSIMISTIC"
 	StrategyOCC         StrategyType = "OCC"
+	StrategyAdaptive    StrategyType = "ADAPTIVE"
 )
 
 type TransferOptions struct {

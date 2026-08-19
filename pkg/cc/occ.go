@@ -63,40 +63,46 @@ func (s *OCCStrategy) ExecuteTransfer(ctx context.Context, db *sql.DB, params le
 		return nil, ledger.ErrInsufficientFunds
 	}
 
-	// Step 3: Atomic single-statement Compare-And-Swap (CAS) for debited account
-	res, err := tx.ExecContext(ctx, `
-		UPDATE accounts 
-		SET balance = balance - $1, version = version + 1, updated_at = CURRENT_TIMESTAMP 
-		WHERE id = $2 AND version = $3
-	`, params.Amount, params.DebitedAccountID, debitedVersion)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return nil, err
-	}
-	if rows == 0 {
-		// Concurrent writer modified debited account version; abort & trigger retry
-		return nil, ledger.ErrVersionMismatch
+	// Step 3: Atomic single-statement Compare-And-Swap (CAS) in ascending account ID order to eliminate AB-BA deadlocks
+	type casUpdate struct {
+		accountID int64
+		version   int64
+		isDebit   bool
 	}
 
-	// Atomic single-statement CAS for credited account
-	res, err = tx.ExecContext(ctx, `
-		UPDATE accounts 
-		SET balance = balance + $1, version = version + 1, updated_at = CURRENT_TIMESTAMP 
-		WHERE id = $2 AND version = $3
-	`, params.Amount, params.CreditedAccountID, creditedVersion)
-	if err != nil {
-		return nil, err
+	u1 := casUpdate{accountID: params.DebitedAccountID, version: debitedVersion, isDebit: true}
+	u2 := casUpdate{accountID: params.CreditedAccountID, version: creditedVersion, isDebit: false}
+	if u1.accountID > u2.accountID {
+		u1, u2 = u2, u1
 	}
-	rows, err = res.RowsAffected()
-	if err != nil {
-		return nil, err
-	}
-	if rows == 0 {
-		// Concurrent writer modified credited account version; abort & trigger retry
-		return nil, ledger.ErrVersionMismatch
+
+	for _, u := range []casUpdate{u1, u2} {
+		var res sql.Result
+		var err error
+		if u.isDebit {
+			res, err = tx.ExecContext(ctx, `
+				UPDATE accounts 
+				SET balance = balance - $1, version = version + 1, updated_at = CURRENT_TIMESTAMP 
+				WHERE id = $2 AND version = $3
+			`, params.Amount, u.accountID, u.version)
+		} else {
+			res, err = tx.ExecContext(ctx, `
+				UPDATE accounts 
+				SET balance = balance + $1, version = version + 1, updated_at = CURRENT_TIMESTAMP 
+				WHERE id = $2 AND version = $3
+			`, params.Amount, u.accountID, u.version)
+		}
+		if err != nil {
+			return nil, err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return nil, err
+		}
+		if rows == 0 {
+			// Concurrent writer modified account version; abort & trigger retry
+			return nil, ledger.ErrVersionMismatch
+		}
 	}
 
 	// Step 4, 5, 6: Record entries, update idempotency key, and commit

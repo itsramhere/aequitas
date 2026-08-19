@@ -78,10 +78,13 @@ func (r *BenchmarkRunner) RunCell(ctx context.Context, cfg CellConfig) (*telemet
 	var clientFailures int64
 	var internalRetries int64
 	var deadlockCount int64
+	var collisionRejections int64
+	var insufficientFundsCount int64
 
 	// Duration arrays for percentile telemetry
 	var appLatencies []time.Duration
 	var dbLatencies []time.Duration
+	var ccWaitLatencies []time.Duration
 	var walProxies []time.Duration
 	var e2eLatencies []time.Duration
 	var latMutex sync.Mutex
@@ -91,13 +94,17 @@ func (r *BenchmarkRunner) RunCell(ctx context.Context, cfg CellConfig) (*telemet
 		if stats != nil {
 			atomic.AddInt64(&internalRetries, int64(stats.InternalRetries))
 			atomic.AddInt64(&deadlockCount, int64(stats.DeadlockCount))
+			atomic.AddInt64(&insufficientFundsCount, int64(stats.InsufficientFundsCount))
 		}
 
 		if err == nil && res != nil {
-			atomic.AddInt64(&committedTxns, 1)
+			if res.Status == "committed" {
+				atomic.AddInt64(&committedTxns, 1)
+			}
 			latMutex.Lock()
 			appLatencies = append(appLatencies, res.AppLatency)
 			dbLatencies = append(dbLatencies, res.DBLatency)
+			ccWaitLatencies = append(ccWaitLatencies, res.CCWaitLatency)
 			walProxies = append(walProxies, res.WALWaitProxy)
 			e2eLatencies = append(e2eLatencies, e2e)
 			latMutex.Unlock()
@@ -165,11 +172,53 @@ func (r *BenchmarkRunner) RunCell(ctx context.Context, cfg CellConfig) (*telemet
 	// 8. Execute Measured Cell Run Window
 	log.Printf("[Runner] Starting measured run window (%v)...", cfg.Duration)
 	isWarmup.Store(false)
+
+	var timeSeries []telemetry.TimeSeriesPoint
+	tsStopCh := make(chan struct{})
+	var tsWg sync.WaitGroup
+
+	tsWg.Add(1)
+	go func() {
+		defer tsWg.Done()
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
+		var lastTxns int64
+		var lastRetries int64
+		second := 0
+
+		for {
+			select {
+			case <-tsStopCh:
+				return
+			case <-ticker.C:
+				second++
+				curTxns := atomic.LoadInt64(&committedTxns)
+				curRetries := atomic.LoadInt64(&internalRetries)
+
+				deltaTxns := curTxns - lastTxns
+				deltaRetries := curRetries - lastRetries
+
+				lastTxns = curTxns
+				lastRetries = curRetries
+
+				timeSeries = append(timeSeries, telemetry.TimeSeriesPoint{
+					Second:  second,
+					TPS:     float64(deltaTxns),
+					Retries: deltaRetries,
+				})
+			}
+		}
+	}()
+
 	time.Sleep(cfg.Duration)
 
-	// Stop workers
+	// Stop workers and time-series sampler
 	close(stopCh)
 	wg.Wait()
+
+	close(tsStopCh)
+	tsWg.Wait()
 	log.Println("[Runner] Measured run window completed.")
 
 	// 9. Post-run Dead Tuple Count
@@ -192,9 +241,11 @@ func (r *BenchmarkRunner) RunCell(ctx context.Context, cfg CellConfig) (*telemet
 	durationSec := cfg.Duration.Seconds()
 	tps := float64(committedTxns) / durationSec
 
-	var abortRate float64
+	var retriesPerRequest float64
+	var clientFailureRate float64
 	if totalRequests > 0 {
-		abortRate = (float64(internalRetries+clientFailures) / float64(totalRequests)) * 100.0
+		retriesPerRequest = float64(internalRetries) / float64(totalRequests)
+		clientFailureRate = (float64(clientFailures) / float64(totalRequests)) * 100.0
 	}
 
 	var deadTuplesPerCommit float64
@@ -203,24 +254,29 @@ func (r *BenchmarkRunner) RunCell(ctx context.Context, cfg CellConfig) (*telemet
 	}
 
 	return &telemetry.CellMetricsReport{
-		Strategy:              cfg.StrategyName,
-		SkewTheta:             cfg.SkewTheta,
-		Concurrency:           cfg.Concurrency,
-		Duration:              cfg.Duration,
-		TotalRequests:         totalRequests,
-		CommittedTxns:         committedTxns,
-		ClientVisibleFailures: clientFailures,
-		InternalRetries:       internalRetries,
-		DeadlockCount:         deadlockCount,
-		Throughput:            tps,
-		AbortRetryRate:        abortRate,
-		RealizedHotRowHitRate: zipfGen.RealizedHotRowHitRate(),
-		DeadTuplesGenerated:   deadTuplesDiff,
-		DeadTuplesPerCommit:   deadTuplesPerCommit,
-		AppLatency:            telemetry.CalculatePercentiles(appLatencies),
-		DBLatency:             telemetry.CalculatePercentiles(dbLatencies),
-		WALWaitProxy:          telemetry.CalculatePercentiles(walProxies),
-		ClientEndToEnd:        telemetry.CalculatePercentiles(e2eLatencies),
-		RuntimeSettings:       telemetry.GetGCRuntimeSettings(),
+		Strategy:               cfg.StrategyName,
+		SkewTheta:              cfg.SkewTheta,
+		Concurrency:            cfg.Concurrency,
+		Duration:               cfg.Duration,
+		TotalRequests:          totalRequests,
+		CommittedTxns:          committedTxns,
+		CollisionRejections:    collisionRejections,
+		ClientVisibleFailures:  clientFailures,
+		InternalRetries:        internalRetries,
+		DeadlockCount:          deadlockCount,
+		InsufficientFundsCount: insufficientFundsCount,
+		Throughput:             tps,
+		RetriesPerRequest:      retriesPerRequest,
+		ClientFailureRate:      clientFailureRate,
+		RealizedHotRowHitRate:  zipfGen.RealizedHotRowHitRate(),
+		DeadTuplesGenerated:    deadTuplesDiff,
+		DeadTuplesPerCommit:    deadTuplesPerCommit,
+		AppLatency:             telemetry.CalculatePercentiles(appLatencies),
+		DBLatency:              telemetry.CalculatePercentiles(dbLatencies),
+		CCWaitLatency:          telemetry.CalculatePercentiles(ccWaitLatencies),
+		WALWaitProxy:           telemetry.CalculatePercentiles(walProxies),
+		ClientEndToEnd:         telemetry.CalculatePercentiles(e2eLatencies),
+		RuntimeSettings:        telemetry.GetGCRuntimeSettings(),
+		TimeSeries:             timeSeries,
 	}, nil
 }

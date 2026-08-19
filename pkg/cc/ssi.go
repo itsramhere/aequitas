@@ -52,15 +52,25 @@ func (s *SSIStrategy) ExecuteTransfer(ctx context.Context, db *sql.DB, params le
 		return nil, ledger.ErrInsufficientFunds
 	}
 
-	// Step 3: Apply debit and credit via plain UPDATE statements
-	_, err = tx.ExecContext(ctx, "UPDATE accounts SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", params.Amount, params.DebitedAccountID)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = tx.ExecContext(ctx, "UPDATE accounts SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", params.Amount, params.CreditedAccountID)
-	if err != nil {
-		return nil, err
+	// Step 3: Apply debit and credit via plain UPDATE statements in ascending account ID order to eliminate AB-BA deadlocks
+	if params.DebitedAccountID < params.CreditedAccountID {
+		_, err = tx.ExecContext(ctx, "UPDATE accounts SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", params.Amount, params.DebitedAccountID)
+		if err != nil {
+			return nil, err
+		}
+		_, err = tx.ExecContext(ctx, "UPDATE accounts SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", params.Amount, params.CreditedAccountID)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		_, err = tx.ExecContext(ctx, "UPDATE accounts SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", params.Amount, params.CreditedAccountID)
+		if err != nil {
+			return nil, err
+		}
+		_, err = tx.ExecContext(ctx, "UPDATE accounts SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", params.Amount, params.DebitedAccountID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Step 4, 5, 6: Write entry log, update idempotency state (if enabled), and commit

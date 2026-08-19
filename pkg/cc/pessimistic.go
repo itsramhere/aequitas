@@ -62,9 +62,9 @@ func (s *PessimisticStrategy) ExecuteTransfer(ctx context.Context, db *sql.DB, p
 		return nil, fmt.Errorf("failed to set lock_timeout: %w", err)
 	}
 
-	dbStart := time.Now()
+	// Step 1: Execute and time the SELECT ... FOR UPDATE statements (CC Wait phase)
+	ccWaitStart := time.Now()
 
-	// Step 1: Lock both account rows in ascending account ID order (Total Lock Order)
 	firstID := params.DebitedAccountID
 	secondID := params.CreditedAccountID
 	if firstID > secondID {
@@ -87,18 +87,23 @@ func (s *PessimisticStrategy) ExecuteTransfer(ctx context.Context, db *sql.DB, p
 		return nil, err
 	}
 
+	ccWaitDuration := time.Since(ccWaitStart)
+
+	// Step 2: Time the actual UPDATE and COMMIT statements (DB Execution phase)
+	dbExecStart := time.Now()
+
 	// Identify debited account balance for sufficiency check
 	debitedBalance := firstBalance
 	if params.DebitedAccountID == secondID {
 		debitedBalance = secondBalance
 	}
 
-	// Step 2: Check funds sufficiency
+	// Check funds sufficiency
 	if debitedBalance-params.Amount < 0 {
 		return nil, ledger.ErrInsufficientFunds
 	}
 
-	// Step 3: Apply debit and credit (safe because row locks are held)
+	// Apply debit and credit (safe because row locks are held)
 	_, err = tx.ExecContext(ctx, "UPDATE accounts SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", params.Amount, params.DebitedAccountID)
 	if err != nil {
 		return nil, err
@@ -115,8 +120,12 @@ func (s *PessimisticStrategy) ExecuteTransfer(ctx context.Context, db *sql.DB, p
 		return nil, err
 	}
 
-	dbDuration := time.Since(dbStart)
+	dbExecDuration := time.Since(dbExecStart)
 	totalDuration := time.Since(start)
+	appDuration := totalDuration - dbExecDuration - ccWaitDuration
+	if appDuration < 0 {
+		appDuration = 0
+	}
 
 	return &ledger.TxResult{
 		TransactionID:  txID,
@@ -124,8 +133,9 @@ func (s *PessimisticStrategy) ExecuteTransfer(ctx context.Context, db *sql.DB, p
 		IdempotencyKey: params.IdempotencyKey,
 		Status:         "committed",
 		Attempts:       1,
-		AppLatency:     totalDuration - dbDuration,
-		DBLatency:      dbDuration,
+		AppLatency:     appDuration,
+		DBLatency:      dbExecDuration,
+		CCWaitLatency:  ccWaitDuration,
 		WALWaitProxy:   walWaitProxy,
 		IsCached:       false,
 	}, nil

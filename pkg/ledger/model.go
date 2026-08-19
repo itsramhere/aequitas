@@ -90,6 +90,7 @@ type TxResult struct {
 	Attempts       int           `json:"attempts"`
 	AppLatency     time.Duration `json:"app_latency"`
 	DBLatency      time.Duration `json:"db_latency"`
+	CCWaitLatency  time.Duration `json:"cc_wait_latency"`
 	WALWaitProxy   time.Duration `json:"wal_wait_proxy"`
 	IsCached       bool          `json:"is_cached"`
 }

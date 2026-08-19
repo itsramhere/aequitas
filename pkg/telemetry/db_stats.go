@@ -15,14 +15,14 @@ func NewDBStatsCollector(db *sql.DB) *DBStatsCollector {
 }
 
 func (c *DBStatsCollector) GetDeadTupleCount(ctx context.Context) (int64, error) {
-	var totalDeadTuples int64
+	var totalTuples int64
 	err := c.db.QueryRowContext(ctx, `
-		SELECT COALESCE(SUM(n_dead_tup), 0) 
+		SELECT COALESCE(SUM(n_tup_upd + n_tup_del), 0) 
 		FROM pg_stat_user_tables 
 		WHERE relname IN ('accounts', 'entries', 'transactions', 'idempotency_keys')
-	`).Scan(&totalDeadTuples)
+	`).Scan(&totalTuples)
 	if err != nil {
 		return 0, fmt.Errorf("failed to query pg_stat_user_tables: %w", err)
 	}
-	return totalDeadTuples, nil
+	return totalTuples, nil
 }

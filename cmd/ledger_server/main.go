@@ -51,6 +51,11 @@ func main() {
 		strat = cc.NewPessimisticStrategy(*lockTimeout)
 	case "OCC":
 		strat = cc.NewOCCStrategy()
+	case "ADAPTIVE":
+		adaptiveStrat := cc.NewAdaptiveStrategy(*lockTimeout)
+		adaptiveStrat.Init(context.Background())
+		defer adaptiveStrat.Stop()
+		strat = adaptiveStrat
 	default:
 		log.Fatalf("Unknown CC Strategy: %s", *strategyName)
 	}

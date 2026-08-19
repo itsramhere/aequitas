@@ -7,15 +7,16 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/lib/pq"
 	"github.com/ledger/skewed-ledger/pkg/ledger"
+	"github.com/lib/pq"
 )
 
 type RetryStats struct {
-	TotalAttempts         int
-	InternalRetries       int
-	DeadlockCount         int
-	ClientVisibleFailures int
+	TotalAttempts          int
+	InternalRetries        int
+	DeadlockCount          int
+	ClientVisibleFailures  int
+	InsufficientFundsCount int
 }
 
 type UnifiedRetryController struct {
@@ -41,26 +42,47 @@ func NewUnifiedRetryController(maxAttempts int, baseBackoff, maxBackoff time.Dur
 	}
 }
 
+// IsInsufficientFundsError checks if the error is an application-level insufficient funds error or PG check_violation (23514)
+func IsInsufficientFundsError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, ledger.ErrInsufficientFunds) {
+		return true
+	}
+	if pqErr, ok := err.(*pq.Error); ok {
+		// 23514 = check_violation
+		if pqErr.Code == "23514" {
+			return true
+		}
+	}
+	return false
+}
+
 // IsRetriableError checks if the error is a retriable CC conflict error
-func IsRetriableError(err error) (bool, bool) { // (isRetriable, isDeadlockOrTimeout)
+func IsRetriableError(err error) (bool, bool) {
+	// (isRetriable, isDeadlockOrTimeout)
 	if err == nil {
 		return false, false
 	}
 	if errors.Is(err, ledger.ErrVersionMismatch) {
 		return true, false
 	}
-	if pqErr, ok := err.(*pq.Error); ok {
+
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
 		// 40001 = serialization_failure (SSI)
 		if pqErr.Code == "40001" {
-			return true, false
+			return true, false // retriable = true, isDeadlock = false
 		}
 		// 40P01 = deadlock_detected
 		// 55P03 = lock_not_available
 		// 57014 = statement_timeout (lock timeout)
 		if pqErr.Code == "40P01" || pqErr.Code == "55P03" || pqErr.Code == "57014" {
-			return true, true
+			return true, true // retriable = true, isDeadlock = true
 		}
 	}
+
 	return false, false
 }
 
@@ -83,6 +105,17 @@ func (c *UnifiedRetryController) ExecuteWithRetry(
 			return result, stats, nil
 		}
 
+		if IsInsufficientFundsError(err) {
+			stats.InsufficientFundsCount++
+			stats.InternalRetries = 0
+			return &ledger.TxResult{
+				ClientID:       params.ClientID,
+				IdempotencyKey: params.IdempotencyKey,
+				Status:         "insufficient_funds",
+				Attempts:       attempt,
+			}, stats, nil
+		}
+
 		lastErr = err
 		retriable, isDeadlock := IsRetriableError(err)
 		if isDeadlock {
@@ -90,7 +123,7 @@ func (c *UnifiedRetryController) ExecuteWithRetry(
 		}
 
 		if !retriable {
-			// Non-retriable business logic error (insufficient funds, account not found)
+			// Non-retriable business logic error (account not found, etc.)
 			return nil, stats, err
 		}
 
