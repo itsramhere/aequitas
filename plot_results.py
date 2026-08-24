@@ -17,7 +17,7 @@ def load_data(results_dir):
     return data
 
 def extract_series(data, fixed_key, fixed_val, x_key, y_func):
-    strategies = ["OCC", "PESSIMISTIC", "SSI"]
+    strategies = ["OCC", "PESSIMISTIC", "SSI", "ADAPTIVE"]
     series_data = {strat: {"x": [], "y": []} for strat in strategies}
     
     for cell in data:
@@ -41,8 +41,8 @@ def extract_series(data, fixed_key, fixed_val, x_key, y_func):
 def plot_graph(series_data, title, xlabel, ylabel, filename, y_log_scale=False):
     plt.figure(figsize=(10, 6))
     
-    colors = {"OCC": "blue", "PESSIMISTIC": "red", "SSI": "green"}
-    markers = {"OCC": "o", "PESSIMISTIC": "s", "SSI": "^"}
+    colors = {"OCC": "blue", "PESSIMISTIC": "red", "SSI": "green", "ADAPTIVE": "purple"}
+    markers = {"OCC": "o", "PESSIMISTIC": "s", "SSI": "^", "ADAPTIVE": "d"}
     
     for strat, data in series_data.items():
         if data["x"]:

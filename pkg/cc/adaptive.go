@@ -124,12 +124,17 @@ func (s *AdaptiveStrategy) ExecuteTransfer(
 	s.mu.RUnlock()
 
 	result, err := active.ExecuteTransfer(ctx, db, params, opts)
-	if err != nil {
-		retriable, _ := IsRetriableError(err)
-		if retriable {
-			atomic.AddInt64(&s.intervalRetries, 1)
-		}
-	}
-
+	// Retry accounting note (ADR-18 revision): per-attempt aborts are counted
+	// exclusively via NoteRetry, which the unified retry controller invokes
+	// from inside its retry loop — including the final exhausted attempt.
+	// Incrementing intervalRetries here as well would double-count the last
+	// attempt of every fully-failed request and inflate the abort ratio.
 	return result, err
+}
+
+// NoteRetry records a single in-flight retriable attempt failure. It is wired
+// as UnifiedRetryController.OnRetriableAttempt so the sliding window measures
+// the true per-attempt abort ratio, not just client-visible exhaustion.
+func (s *AdaptiveStrategy) NoteRetry() {
+	atomic.AddInt64(&s.intervalRetries, 1)
 }

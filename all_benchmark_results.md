@@ -1,5 +1,9 @@
 ﻿# Benchmark Raw Data Archive
 
+_Generated: 2026-08-24 16:15:27 UTC by consolidate_results.ps1._
+
+_Note: result files were captured by different instrument versions over the life of this project (e.g. older files carry `abort_retry_rate_pct` while current code emits `retries_per_request`/`client_failure_rate_pct`). Field sets are NOT uniform across files; check each JSON's fields before cross-file comparison._
+
 ### results\set1\OCC_skew_0.4_conc_50.json
 
 ```json
@@ -1604,6 +1608,1653 @@
     "p50": 4778900,
     "p95": 42340900,
     "p99": 80735400
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\OCC_skew_0.6_run_1.json
+
+```json
+{
+  "strategy": "OCC",
+  "skew_theta": 0.6,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 138868,
+  "committed_txns": 138378,
+  "client_visible_failures": 490,
+  "collision_rejections": 0,
+  "internal_retries": 13431,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 4612.6,
+  "retries_per_request": 0.09671774634905089,
+  "client_failure_rate_pct": 0.35285306910159286,
+  "realized_hot_row_hit_rate_pct": 1.0323015618092946,
+  "dead_tuples_generated": 311236,
+  "dead_tuples_per_commit": 2.249172556331209,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1195200,
+    "p99": 5234700
+  },
+  "db_latency": {
+    "p50": 7596000,
+    "p95": 16915400,
+    "p99": 28605800
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 1058400,
+    "p95": 8087600,
+    "p99": 14141200
+  },
+  "client_e2e_latency": {
+    "p50": 8166000,
+    "p95": 22594600,
+    "p99": 56925000
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\OCC_skew_0.6_run_2.json
+
+```json
+{
+  "strategy": "OCC",
+  "skew_theta": 0.6,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 141438,
+  "committed_txns": 140893,
+  "client_visible_failures": 545,
+  "collision_rejections": 0,
+  "internal_retries": 13906,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 4696.433333333333,
+  "retries_per_request": 0.0983186979453895,
+  "client_failure_rate_pct": 0.3853278468304133,
+  "realized_hot_row_hit_rate_pct": 1.0433767236589753,
+  "dead_tuples_generated": 314170,
+  "dead_tuples_per_commit": 2.2298481826634395,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1199600,
+    "p99": 5153100
+  },
+  "db_latency": {
+    "p50": 7550700,
+    "p95": 16334600,
+    "p99": 27177400
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 1060900,
+    "p95": 7649900,
+    "p99": 14072200
+  },
+  "client_e2e_latency": {
+    "p50": 8128700,
+    "p95": 21823200,
+    "p99": 55788700
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\OCC_skew_0.6_run_3.json
+
+```json
+{
+  "strategy": "OCC",
+  "skew_theta": 0.6,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 140985,
+  "committed_txns": 140477,
+  "client_visible_failures": 508,
+  "collision_rejections": 0,
+  "internal_retries": 13514,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 4682.566666666667,
+  "retries_per_request": 0.09585416888321453,
+  "client_failure_rate_pct": 0.3603220200730574,
+  "realized_hot_row_hit_rate_pct": 1.0224910520310717,
+  "dead_tuples_generated": 316512,
+  "dead_tuples_per_commit": 2.2531232870861424,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1072300,
+    "p99": 5066600
+  },
+  "db_latency": {
+    "p50": 7612700,
+    "p95": 16293500,
+    "p99": 26617900
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 1085400,
+    "p95": 7908600,
+    "p99": 13874200
+  },
+  "client_e2e_latency": {
+    "p50": 8175000,
+    "p95": 21706500,
+    "p99": 54629100
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\OCC_skew_0.8_run_1.json
+
+```json
+{
+  "strategy": "OCC",
+  "skew_theta": 0.8,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 110501,
+  "committed_txns": 105983,
+  "client_visible_failures": 4518,
+  "collision_rejections": 0,
+  "internal_retries": 41698,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 3532.766666666667,
+  "retries_per_request": 0.3773540510945602,
+  "client_failure_rate_pct": 4.088650781440892,
+  "realized_hot_row_hit_rate_pct": 3.717837736784566,
+  "dead_tuples_generated": 234148,
+  "dead_tuples_per_commit": 2.2092977175584765,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1009400,
+    "p99": 3291400
+  },
+  "db_latency": {
+    "p50": 4682500,
+    "p95": 10896700,
+    "p99": 17975400
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 557800,
+    "p95": 4025900,
+    "p99": 8463000
+  },
+  "client_e2e_latency": {
+    "p50": 5357500,
+    "p95": 28204400,
+    "p99": 86640700
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\OCC_skew_0.8_run_2.json
+
+```json
+{
+  "strategy": "OCC",
+  "skew_theta": 0.8,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 109833,
+  "committed_txns": 105444,
+  "client_visible_failures": 4389,
+  "collision_rejections": 0,
+  "internal_retries": 41455,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 3514.8,
+  "retries_per_request": 0.37743665382899494,
+  "client_failure_rate_pct": 3.996066755893038,
+  "realized_hot_row_hit_rate_pct": 3.657164441801217,
+  "dead_tuples_generated": 237529,
+  "dead_tuples_per_commit": 2.2526554379575887,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1009900,
+    "p99": 3377100
+  },
+  "db_latency": {
+    "p50": 4702800,
+    "p95": 10938500,
+    "p99": 18583200
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 550200,
+    "p95": 4077200,
+    "p99": 8366600
+  },
+  "client_e2e_latency": {
+    "p50": 5437700,
+    "p95": 29521900,
+    "p99": 86957500
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\OCC_skew_0.8_run_3.json
+
+```json
+{
+  "strategy": "OCC",
+  "skew_theta": 0.8,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 110236,
+  "committed_txns": 105724,
+  "client_visible_failures": 4512,
+  "collision_rejections": 0,
+  "internal_retries": 41664,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 3524.133333333333,
+  "retries_per_request": 0.3779527559055118,
+  "client_failure_rate_pct": 4.0930367575020865,
+  "realized_hot_row_hit_rate_pct": 3.689787089150159,
+  "dead_tuples_generated": 237015,
+  "dead_tuples_per_commit": 2.2418277779879685,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1010300,
+    "p99": 3324800
+  },
+  "db_latency": {
+    "p50": 4641300,
+    "p95": 10729300,
+    "p99": 18205200
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 553200,
+    "p95": 3840900,
+    "p99": 8023000
+  },
+  "client_e2e_latency": {
+    "p50": 5296700,
+    "p95": 28482400,
+    "p99": 85602300
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\OCC_skew_1_run_1.json
+
+```json
+{
+  "strategy": "OCC",
+  "skew_theta": 1,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 95044,
+  "committed_txns": 83387,
+  "client_visible_failures": 11550,
+  "collision_rejections": 0,
+  "internal_retries": 82082,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 107,
+  "throughput_tps": 2779.5666666666666,
+  "retries_per_request": 0.8636210597197088,
+  "client_failure_rate_pct": 12.152266318757627,
+  "realized_hot_row_hit_rate_pct": 10.135741632929712,
+  "dead_tuples_generated": 189790,
+  "dead_tuples_per_commit": 2.276014246825045,
+  "app_latency": {
+    "p50": 0,
+    "p95": 531200,
+    "p99": 1014900
+  },
+  "db_latency": {
+    "p50": 2782100,
+    "p95": 4324300,
+    "p99": 5701000
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 516900,
+    "p95": 1080200,
+    "p99": 2077100
+  },
+  "client_e2e_latency": {
+    "p50": 3172300,
+    "p95": 36210100,
+    "p99": 74067000
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\OCC_skew_1_run_2.json
+
+```json
+{
+  "strategy": "OCC",
+  "skew_theta": 1,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 95040,
+  "committed_txns": 83464,
+  "client_visible_failures": 11576,
+  "collision_rejections": 0,
+  "internal_retries": 82446,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 2782.133333333333,
+  "retries_per_request": 0.8674873737373737,
+  "client_failure_rate_pct": 12.18013468013468,
+  "realized_hot_row_hit_rate_pct": 10.239377508754927,
+  "dead_tuples_generated": 190154,
+  "dead_tuples_per_commit": 2.2782756637592256,
+  "app_latency": {
+    "p50": 0,
+    "p95": 530800,
+    "p99": 1014100
+  },
+  "db_latency": {
+    "p50": 2752700,
+    "p95": 4292600,
+    "p99": 5680200
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 516800,
+    "p95": 1089100,
+    "p99": 2101500
+  },
+  "client_e2e_latency": {
+    "p50": 3169900,
+    "p95": 35885200,
+    "p99": 73306000
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\OCC_skew_1_run_3.json
+
+```json
+{
+  "strategy": "OCC",
+  "skew_theta": 1,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 94257,
+  "committed_txns": 82666,
+  "client_visible_failures": 11530,
+  "collision_rejections": 0,
+  "internal_retries": 81787,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 61,
+  "throughput_tps": 2755.5333333333333,
+  "retries_per_request": 0.8677021335285443,
+  "client_failure_rate_pct": 12.232513235091293,
+  "realized_hot_row_hit_rate_pct": 10.195599585301233,
+  "dead_tuples_generated": 189048,
+  "dead_tuples_per_commit": 2.286889410398471,
+  "app_latency": {
+    "p50": 0,
+    "p95": 531900,
+    "p99": 1023600
+  },
+  "db_latency": {
+    "p50": 2843900,
+    "p95": 4428500,
+    "p99": 5874300
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 517100,
+    "p95": 1104200,
+    "p99": 2110000
+  },
+  "client_e2e_latency": {
+    "p50": 3187400,
+    "p95": 35971300,
+    "p99": 74186000
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\PESSIMISTIC_skew_0.6_run_1.json
+
+```json
+{
+  "strategy": "PESSIMISTIC",
+  "skew_theta": 0.6,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 136938,
+  "committed_txns": 136938,
+  "client_visible_failures": 0,
+  "collision_rejections": 0,
+  "internal_retries": 0,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 4564.6,
+  "retries_per_request": 0,
+  "client_failure_rate_pct": 0,
+  "realized_hot_row_hit_rate_pct": 1.0226902262502444,
+  "dead_tuples_generated": 302028,
+  "dead_tuples_per_commit": 2.205582088244315,
+  "app_latency": {
+    "p50": 539500,
+    "p95": 2524200,
+    "p99": 6522700
+  },
+  "db_latency": {
+    "p50": 5998000,
+    "p95": 14517800,
+    "p99": 28374800
+  },
+  "cc_wait_latency": {
+    "p50": 1110000,
+    "p95": 9040400,
+    "p99": 30552700
+  },
+  "wal_wait_proxy": {
+    "p50": 1095200,
+    "p95": 8000400,
+    "p99": 14711900
+  },
+  "client_e2e_latency": {
+    "p50": 8522800,
+    "p95": 22284600,
+    "p99": 59044600
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\PESSIMISTIC_skew_0.6_run_2.json
+
+```json
+{
+  "strategy": "PESSIMISTIC",
+  "skew_theta": 0.6,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 137970,
+  "committed_txns": 137970,
+  "client_visible_failures": 0,
+  "collision_rejections": 0,
+  "internal_retries": 0,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 4599,
+  "retries_per_request": 0,
+  "client_failure_rate_pct": 0,
+  "realized_hot_row_hit_rate_pct": 1.0187618271781818,
+  "dead_tuples_generated": 311162,
+  "dead_tuples_per_commit": 2.2552873813147785,
+  "app_latency": {
+    "p50": 537000,
+    "p95": 2507300,
+    "p99": 6522500
+  },
+  "db_latency": {
+    "p50": 5983900,
+    "p95": 14882000,
+    "p99": 24163500
+  },
+  "cc_wait_latency": {
+    "p50": 1103200,
+    "p95": 9138100,
+    "p99": 30068400
+  },
+  "wal_wait_proxy": {
+    "p50": 1084900,
+    "p95": 8117600,
+    "p99": 14076600
+  },
+  "client_e2e_latency": {
+    "p50": 8580900,
+    "p95": 22119900,
+    "p99": 50639500
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\PESSIMISTIC_skew_0.6_run_3.json
+
+```json
+{
+  "strategy": "PESSIMISTIC",
+  "skew_theta": 0.6,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 145258,
+  "committed_txns": 145258,
+  "client_visible_failures": 0,
+  "collision_rejections": 0,
+  "internal_retries": 0,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 4841.933333333333,
+  "retries_per_request": 0,
+  "client_failure_rate_pct": 0,
+  "realized_hot_row_hit_rate_pct": 1.0200923568147624,
+  "dead_tuples_generated": 322100,
+  "dead_tuples_per_commit": 2.217433807432293,
+  "app_latency": {
+    "p50": 536500,
+    "p95": 2083100,
+    "p99": 6407000
+  },
+  "db_latency": {
+    "p50": 5559500,
+    "p95": 14026400,
+    "p99": 22938800
+  },
+  "cc_wait_latency": {
+    "p50": 1081100,
+    "p95": 8732500,
+    "p99": 28072400
+  },
+  "wal_wait_proxy": {
+    "p50": 1009900,
+    "p95": 7577500,
+    "p99": 13248100
+  },
+  "client_e2e_latency": {
+    "p50": 8348500,
+    "p95": 20732400,
+    "p99": 48098100
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\PESSIMISTIC_skew_0.8_run_1.json
+
+```json
+{
+  "strategy": "PESSIMISTIC",
+  "skew_theta": 0.8,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 89232,
+  "committed_txns": 89215,
+  "client_visible_failures": 0,
+  "collision_rejections": 0,
+  "internal_retries": 0,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 17,
+  "throughput_tps": 2973.8333333333335,
+  "retries_per_request": 0,
+  "client_failure_rate_pct": 0,
+  "realized_hot_row_hit_rate_pct": 3.6923496815007235,
+  "dead_tuples_generated": 201238,
+  "dead_tuples_per_commit": 2.255652076444544,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1369100,
+    "p99": 2452100
+  },
+  "db_latency": {
+    "p50": 3010300,
+    "p95": 6024400,
+    "p99": 12350800
+  },
+  "cc_wait_latency": {
+    "p50": 1008700,
+    "p95": 20014900,
+    "p99": 343823400
+  },
+  "wal_wait_proxy": {
+    "p50": 618700,
+    "p95": 2209200,
+    "p99": 4199200
+  },
+  "client_e2e_latency": {
+    "p50": 4527300,
+    "p95": 26855800,
+    "p99": 349184300
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\PESSIMISTIC_skew_0.8_run_2.json
+
+```json
+{
+  "strategy": "PESSIMISTIC",
+  "skew_theta": 0.8,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 96219,
+  "committed_txns": 96219,
+  "client_visible_failures": 0,
+  "collision_rejections": 0,
+  "internal_retries": 0,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 3207.3,
+  "retries_per_request": 0,
+  "client_failure_rate_pct": 0,
+  "realized_hot_row_hit_rate_pct": 3.6837967787345294,
+  "dead_tuples_generated": 214206,
+  "dead_tuples_per_commit": 2.2262339039067127,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1328400,
+    "p99": 2275600
+  },
+  "db_latency": {
+    "p50": 2999600,
+    "p95": 5634100,
+    "p99": 10547000
+  },
+  "cc_wait_latency": {
+    "p50": 1007100,
+    "p95": 18964200,
+    "p99": 296211100
+  },
+  "wal_wait_proxy": {
+    "p50": 612100,
+    "p95": 2031000,
+    "p99": 3796900
+  },
+  "client_e2e_latency": {
+    "p50": 4368400,
+    "p95": 24793000,
+    "p99": 300846000
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\PESSIMISTIC_skew_0.8_run_3.json
+
+```json
+{
+  "strategy": "PESSIMISTIC",
+  "skew_theta": 0.8,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 103138,
+  "committed_txns": 103036,
+  "client_visible_failures": 0,
+  "collision_rejections": 0,
+  "internal_retries": 0,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 102,
+  "throughput_tps": 3434.5333333333333,
+  "retries_per_request": 0,
+  "client_failure_rate_pct": 0,
+  "realized_hot_row_hit_rate_pct": 3.721062771934451,
+  "dead_tuples_generated": 230220,
+  "dead_tuples_per_commit": 2.234364688070189,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1257500,
+    "p99": 2001300
+  },
+  "db_latency": {
+    "p50": 2884500,
+    "p95": 4896400,
+    "p99": 8229400
+  },
+  "cc_wait_latency": {
+    "p50": 1002300,
+    "p95": 18948500,
+    "p99": 288626700
+  },
+  "wal_wait_proxy": {
+    "p50": 573900,
+    "p95": 1886700,
+    "p99": 3206400
+  },
+  "client_e2e_latency": {
+    "p50": 4094100,
+    "p95": 23830900,
+    "p99": 294650300
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\PESSIMISTIC_skew_1_run_1.json
+
+```json
+{
+  "strategy": "PESSIMISTIC",
+  "skew_theta": 1,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 66254,
+  "committed_txns": 65980,
+  "client_visible_failures": 0,
+  "collision_rejections": 0,
+  "internal_retries": 0,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 274,
+  "throughput_tps": 2199.3333333333335,
+  "retries_per_request": 0,
+  "client_failure_rate_pct": 0,
+  "realized_hot_row_hit_rate_pct": 10.265068488642273,
+  "dead_tuples_generated": 147858,
+  "dead_tuples_per_commit": 2.2409518035768414,
+  "app_latency": {
+    "p50": 0,
+    "p95": 591100,
+    "p99": 646200
+  },
+  "db_latency": {
+    "p50": 1698700,
+    "p95": 2307100,
+    "p99": 2861900
+  },
+  "cc_wait_latency": {
+    "p50": 569200,
+    "p95": 132382800,
+    "p99": 357077100
+  },
+  "wal_wait_proxy": {
+    "p50": 535700,
+    "p95": 625000,
+    "p99": 1173300
+  },
+  "client_e2e_latency": {
+    "p50": 2768000,
+    "p95": 136505700,
+    "p99": 362505800
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\PESSIMISTIC_skew_1_run_2.json
+
+```json
+{
+  "strategy": "PESSIMISTIC",
+  "skew_theta": 1,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 65559,
+  "committed_txns": 65018,
+  "client_visible_failures": 0,
+  "collision_rejections": 0,
+  "internal_retries": 0,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 541,
+  "throughput_tps": 2167.266666666667,
+  "retries_per_request": 0,
+  "client_failure_rate_pct": 0,
+  "realized_hot_row_hit_rate_pct": 10.14563042293945,
+  "dead_tuples_generated": 145508,
+  "dead_tuples_per_commit": 2.2379648712664184,
+  "app_latency": {
+    "p50": 0,
+    "p95": 592500,
+    "p99": 646700
+  },
+  "db_latency": {
+    "p50": 1703900,
+    "p95": 2319200,
+    "p99": 2894200
+  },
+  "cc_wait_latency": {
+    "p50": 569700,
+    "p95": 128837200,
+    "p99": 351374800
+  },
+  "wal_wait_proxy": {
+    "p50": 536200,
+    "p95": 623800,
+    "p99": 1187800
+  },
+  "client_e2e_latency": {
+    "p50": 2773300,
+    "p95": 135615800,
+    "p99": 360263700
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\PESSIMISTIC_skew_1_run_3.json
+
+```json
+{
+  "strategy": "PESSIMISTIC",
+  "skew_theta": 1,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 65981,
+  "committed_txns": 65540,
+  "client_visible_failures": 0,
+  "collision_rejections": 0,
+  "internal_retries": 0,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 441,
+  "throughput_tps": 2184.6666666666665,
+  "retries_per_request": 0,
+  "client_failure_rate_pct": 0,
+  "realized_hot_row_hit_rate_pct": 10.22138052635016,
+  "dead_tuples_generated": 148340,
+  "dead_tuples_per_commit": 2.2633506255721696,
+  "app_latency": {
+    "p50": 0,
+    "p95": 591400,
+    "p99": 651800
+  },
+  "db_latency": {
+    "p50": 1695300,
+    "p95": 2311000,
+    "p99": 2888900
+  },
+  "cc_wait_latency": {
+    "p50": 567100,
+    "p95": 126917300,
+    "p99": 351823700
+  },
+  "wal_wait_proxy": {
+    "p50": 535200,
+    "p95": 623100,
+    "p99": 1236600
+  },
+  "client_e2e_latency": {
+    "p50": 2763600,
+    "p95": 132628600,
+    "p99": 361257600
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\SSI_skew_0.6_run_1.json
+
+```json
+{
+  "strategy": "SSI",
+  "skew_theta": 0.6,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 110550,
+  "committed_txns": 110122,
+  "client_visible_failures": 428,
+  "collision_rejections": 0,
+  "internal_retries": 11940,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 3670.733333333333,
+  "retries_per_request": 0.10800542740841249,
+  "client_failure_rate_pct": 0.3871551334237901,
+  "realized_hot_row_hit_rate_pct": 1.0202952709928825,
+  "dead_tuples_generated": 244218,
+  "dead_tuples_per_commit": 2.217704001017054,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1511000,
+    "p99": 5739700
+  },
+  "db_latency": {
+    "p50": 9278600,
+    "p95": 21911500,
+    "p99": 36516800
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 2005300,
+    "p95": 11095000,
+    "p99": 19105400
+  },
+  "client_e2e_latency": {
+    "p50": 10182800,
+    "p95": 29375000,
+    "p99": 68162500
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\SSI_skew_0.6_run_2.json
+
+```json
+{
+  "strategy": "SSI",
+  "skew_theta": 0.6,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 117285,
+  "committed_txns": 116846,
+  "client_visible_failures": 439,
+  "collision_rejections": 0,
+  "internal_retries": 12343,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 3894.866666666667,
+  "retries_per_request": 0.10523937417402054,
+  "client_failure_rate_pct": 0.37430191414076824,
+  "realized_hot_row_hit_rate_pct": 1.0059459398317643,
+  "dead_tuples_generated": 266620,
+  "dead_tuples_per_commit": 2.281806822655461,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1509400,
+    "p99": 5159900
+  },
+  "db_latency": {
+    "p50": 9139700,
+    "p95": 20225600,
+    "p99": 32062700
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 1760000,
+    "p95": 10726600,
+    "p99": 18479100
+  },
+  "client_e2e_latency": {
+    "p50": 9827700,
+    "p95": 26972700,
+    "p99": 61761600
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\SSI_skew_0.6_run_3.json
+
+```json
+{
+  "strategy": "SSI",
+  "skew_theta": 0.6,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 135356,
+  "committed_txns": 134863,
+  "client_visible_failures": 493,
+  "collision_rejections": 0,
+  "internal_retries": 13989,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 4495.433333333333,
+  "retries_per_request": 0.10334968527438754,
+  "client_failure_rate_pct": 0.3642247111321256,
+  "realized_hot_row_hit_rate_pct": 1.0250603613354425,
+  "dead_tuples_generated": 298612,
+  "dead_tuples_per_commit": 2.214187731253198,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1383400,
+    "p99": 5421300
+  },
+  "db_latency": {
+    "p50": 7124600,
+    "p95": 18923000,
+    "p99": 36092100
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 1236800,
+    "p95": 9639200,
+    "p99": 19872600
+  },
+  "client_e2e_latency": {
+    "p50": 7794900,
+    "p95": 25517100,
+    "p99": 64739900
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\SSI_skew_0.8_run_1.json
+
+```json
+{
+  "strategy": "SSI",
+  "skew_theta": 0.8,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 147580,
+  "committed_txns": 141488,
+  "client_visible_failures": 6092,
+  "collision_rejections": 0,
+  "internal_retries": 59073,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 4716.266666666666,
+  "retries_per_request": 0.4002778154221439,
+  "client_failure_rate_pct": 4.127930613904323,
+  "realized_hot_row_hit_rate_pct": 3.6923913536049304,
+  "dead_tuples_generated": 316334,
+  "dead_tuples_per_commit": 2.235765577292774,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1008000,
+    "p99": 2066400
+  },
+  "db_latency": {
+    "p50": 3662800,
+    "p95": 7702600,
+    "p99": 13260100
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 532300,
+    "p95": 2655700,
+    "p99": 5695000
+  },
+  "client_e2e_latency": {
+    "p50": 4195300,
+    "p95": 22880500,
+    "p99": 69918600
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\SSI_skew_0.8_run_2.json
+
+```json
+{
+  "strategy": "SSI",
+  "skew_theta": 0.8,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 132757,
+  "committed_txns": 127024,
+  "client_visible_failures": 5733,
+  "collision_rejections": 0,
+  "internal_retries": 54052,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 0,
+  "throughput_tps": 4234.133333333333,
+  "retries_per_request": 0.4071499054663784,
+  "client_failure_rate_pct": 4.318416354693161,
+  "realized_hot_row_hit_rate_pct": 3.6151412318234724,
+  "dead_tuples_generated": 294390,
+  "dead_tuples_per_commit": 2.3175935256329514,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1008900,
+    "p99": 2598100
+  },
+  "db_latency": {
+    "p50": 4106000,
+    "p95": 9273900,
+    "p99": 15918700
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 557400,
+    "p95": 3598000,
+    "p99": 7630300
+  },
+  "client_e2e_latency": {
+    "p50": 4690500,
+    "p95": 25267700,
+    "p99": 73771100
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\SSI_skew_0.8_run_3.json
+
+```json
+{
+  "strategy": "SSI",
+  "skew_theta": 0.8,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 113749,
+  "committed_txns": 108541,
+  "client_visible_failures": 5148,
+  "collision_rejections": 0,
+  "internal_retries": 47166,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 60,
+  "throughput_tps": 3618.0333333333333,
+  "retries_per_request": 0.41464979911911315,
+  "client_failure_rate_pct": 4.525754072563275,
+  "realized_hot_row_hit_rate_pct": 3.685543154818821,
+  "dead_tuples_generated": 250931,
+  "dead_tuples_per_commit": 2.311854506591979,
+  "app_latency": {
+    "p50": 0,
+    "p95": 1011300,
+    "p99": 3779700
+  },
+  "db_latency": {
+    "p50": 4631100,
+    "p95": 11986000,
+    "p99": 20844300
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 998200,
+    "p95": 4639200,
+    "p99": 9929000
+  },
+  "client_e2e_latency": {
+    "p50": 5449300,
+    "p95": 30265500,
+    "p99": 81065200
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\SSI_skew_1_run_1.json
+
+```json
+{
+  "strategy": "SSI",
+  "skew_theta": 1,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 96592,
+  "committed_txns": 83841,
+  "client_visible_failures": 11749,
+  "collision_rejections": 0,
+  "internal_retries": 84055,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 1002,
+  "throughput_tps": 2794.7,
+  "retries_per_request": 0.870206642372039,
+  "client_failure_rate_pct": 12.163533211860196,
+  "realized_hot_row_hit_rate_pct": 10.241899539431921,
+  "dead_tuples_generated": 192174,
+  "dead_tuples_per_commit": 2.2921243782874727,
+  "app_latency": {
+    "p50": 0,
+    "p95": 550300,
+    "p99": 1078400
+  },
+  "db_latency": {
+    "p50": 2675300,
+    "p95": 4773100,
+    "p99": 7466600
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 518800,
+    "p95": 1519300,
+    "p99": 2736900
+  },
+  "client_e2e_latency": {
+    "p50": 3177300,
+    "p95": 36057900,
+    "p99": 72581500
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\SSI_skew_1_run_2.json
+
+```json
+{
+  "strategy": "SSI",
+  "skew_theta": 1,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 96470,
+  "committed_txns": 83842,
+  "client_visible_failures": 11597,
+  "collision_rejections": 0,
+  "internal_retries": 83839,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 1031,
+  "throughput_tps": 2794.733333333333,
+  "retries_per_request": 0.8690681040738053,
+  "client_failure_rate_pct": 12.021353788742614,
+  "realized_hot_row_hit_rate_pct": 10.069555286786294,
+  "dead_tuples_generated": 192125,
+  "dead_tuples_per_commit": 2.2915126070465877,
+  "app_latency": {
+    "p50": 0,
+    "p95": 553700,
+    "p99": 1180600
+  },
+  "db_latency": {
+    "p50": 2649100,
+    "p95": 5080200,
+    "p99": 8546300
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 518500,
+    "p95": 1518600,
+    "p99": 2713400
+  },
+  "client_e2e_latency": {
+    "p50": 3159700,
+    "p95": 36261300,
+    "p99": 73538600
+  },
+  "client_backoff_rejection_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "runtime_settings": {
+    "gogc": "100 (default)",
+    "gomaxprocs": 12,
+    "num_cpu": 12
+  }
+}
+```
+
+
+
+### results\set1_repetitions\SSI_skew_1_run_3.json
+
+```json
+{
+  "strategy": "SSI",
+  "skew_theta": 1,
+  "concurrency": 50,
+  "duration": 30000000000,
+  "total_requests": 104245,
+  "committed_txns": 91013,
+  "client_visible_failures": 12191,
+  "collision_rejections": 0,
+  "internal_retries": 88859,
+  "deadlock_count": 0,
+  "insufficient_funds_count": 1041,
+  "throughput_tps": 3033.766666666667,
+  "retries_per_request": 0.8524053911458583,
+  "client_failure_rate_pct": 11.694565686603674,
+  "realized_hot_row_hit_rate_pct": 10.247981642156041,
+  "dead_tuples_generated": 207376,
+  "dead_tuples_per_commit": 2.2785316383373804,
+  "app_latency": {
+    "p50": 0,
+    "p95": 531700,
+    "p99": 1014000
+  },
+  "db_latency": {
+    "p50": 2592300,
+    "p95": 3924600,
+    "p99": 5190400
+  },
+  "cc_wait_latency": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0
+  },
+  "wal_wait_proxy": {
+    "p50": 517400,
+    "p95": 1110000,
+    "p99": 2103800
+  },
+  "client_e2e_latency": {
+    "p50": 2951200,
+    "p95": 34470300,
+    "p99": 70108800
   },
   "client_backoff_rejection_latency": {
     "p50": 0,

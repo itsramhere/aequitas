@@ -41,12 +41,14 @@ StageB_Commit(c, k) ==
     /\ ck \in inFlight
     /\ idempotencyKeys[ck] = "pending"
     /\ idempotencyKeys' = [idempotencyKeys EXCEPT ![ck] = "committed"]
-    /\ ledgerEntries'   = [ledgerEntries EXCEPT ![ck] = {<<c, k, "tx_entry_set">>>}]
+    /\ ledgerEntries'   = [ledgerEntries EXCEPT ![ck] = {<<c, k, "tx_entry_set">>}]
     /\ inFlight'        = inFlight \ {ck}
 
 -----------------------------------------------------------------------------
-\* Crash Action: Worker process dies mid-flight during Stage B
-\* Uncommitted ledger entries roll back completely, key remains in 'pending' or transitions to 'failed'
+\* Crash Action: Worker process dies mid-flight during Stage B.
+\* Uncommitted ledger entries roll back completely. Abstraction note: a real
+\* crash leaves the key 'pending' until the TTL cleaner later transitions it
+\* to 'failed'; this action folds that eventual transition into one step.
 Crash(c, k) ==
     LET ck == <<c, k>> IN
     /\ ck \in inFlight
@@ -55,13 +57,28 @@ Crash(c, k) ==
     /\ idempotencyKeys' = [idempotencyKeys EXCEPT ![ck] = "failed"]
     /\ UNCHANGED <<ledgerEntries>>
 
-\* TTL Cleanup: Expired pending key transitions to terminal 'failed' state
+\* TTL Cleanup: Expired pending key transitions to terminal 'failed' state.
+\* Matches the implementation: the cleaner issues an unconditional
+\* UPDATE ... WHERE state = 'pending' and does NOT consult whether a worker
+\* is mid-Stage-B (the old `ck \notin inFlight` precondition assumed away
+\* exactly the race this protocol defends against). A late Stage B commit
+\* then matches zero 'pending' rows and aborts, preserving at-most-once.
 TTLCleanup(c, k) ==
     LET ck == <<c, k>> IN
-    /\ ck \notin inFlight
     /\ idempotencyKeys[ck] = "pending"
     /\ idempotencyKeys' = [idempotencyKeys EXCEPT ![ck] = "failed"]
     /\ UNCHANGED <<ledgerEntries, inFlight>>
+
+\* Reclaim: a retryer atomically re-claims a terminal 'failed' key
+\* (failed -> pending, CAS-guarded) and re-executes Stage B. Exactly one
+\* retryer can hold the claim at a time; concurrent retryers observe
+\* 'pending' and are rejected (StageA_Collision).
+Reclaim(c, k) ==
+    LET ck == <<c, k>> IN
+    /\ idempotencyKeys[ck] = "failed"
+    /\ idempotencyKeys' = [idempotencyKeys EXCEPT ![ck] = "pending"]
+    /\ inFlight'        = inFlight \cup {ck}
+    /\ UNCHANGED <<ledgerEntries>>
 
 -----------------------------------------------------------------------------
 Next ==
@@ -71,8 +88,18 @@ Next ==
         \/ StageB_Commit(c, k)
         \/ Crash(c, k)
         \/ TTLCleanup(c, k)
+        \/ Reclaim(c, k)
 
-Spec == Init /\ [][Next]_vars /\ WF_vars(Next)
+\* Fairness: WF_vars(Next) alone admits infinite behaviors in which a worker
+\* stalls mid-Stage-B forever and the cleaner never fires, leaving a key
+\* 'pending' eternally (TLC produced exactly such a counterexample). Per-key
+\* weak fairness on TTLCleanup guarantees every pending key eventually
+\* reaches a terminal state.
+Fairness ==
+    /\ WF_vars(Next)
+    /\ \A c \in Clients, k \in Keys : WF_vars(TTLCleanup(c, k))
+
+Spec == Init /\ [][Next]_vars /\ Fairness
 
 -----------------------------------------------------------------------------
 \* INVARIANTS

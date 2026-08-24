@@ -1,25 +1,25 @@
 import os
+import sys
 import glob
 import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-def load_benchmark_data():
-    search_dirs = [
-        os.path.join("results", "set1_ci"),
-        os.path.join("results", "set1")
-    ]
-    
-    data_files = []
-    for d in search_dirs:
-        if os.path.exists(d):
-            files = glob.glob(os.path.join(d, "*.json"))
-            if files:
-                data_files.extend(files)
-                print(f"Found {len(files)} JSON report files in {d}")
+def load_benchmark_data(results_dir):
+    # ADR-19 revision: exactly ONE result directory per invocation. Pooling
+    # set1_ci with single-run set1 data double-weighted overlapping cells and
+    # mixed repetition counts — the same corruption compute_confidence_intervals.py
+    # already fixed.
+    if not os.path.exists(results_dir):
+        print(f"Directory {results_dir} not found.")
+        return []
+
+    files = sorted(glob.glob(os.path.join(results_dir, "*.json")))
+    if files:
+        print(f"Found {len(files)} JSON report files in {results_dir}")
 
     data_cells = []
-    for filepath in data_files:
+    for filepath in files:
         try:
             with open(filepath, "r", encoding="utf-8") as f:
                 cell = json.load(f)
@@ -54,7 +54,8 @@ def aggregate_matrix(data_cells, strategy):
     return mean_grid, skews, concs
 
 def main():
-    data_cells = load_benchmark_data()
+    results_dir = sys.argv[1] if len(sys.argv) > 1 else os.path.join("results", "set1_ci")
+    data_cells = load_benchmark_data(results_dir)
     if not data_cells:
         print("No benchmark JSON data found in results directory.")
         return

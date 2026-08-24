@@ -1,12 +1,13 @@
 package cc
 
 import (
+	"errors"
+	"fmt"
 	"sync/atomic"
 	"testing"
-	"errors"
 
-	"github.com/lib/pq"
 	"github.com/ledger/skewed-ledger/pkg/ledger"
+	"github.com/lib/pq"
 )
 
 func TestIsInsufficientFundsError(t *testing.T) {
@@ -17,6 +18,25 @@ func TestIsInsufficientFundsError(t *testing.T) {
 	pgCheckViolationErr := &pq.Error{Code: "23514"}
 	if !IsInsufficientFundsError(pgCheckViolationErr) {
 		t.Errorf("Expected PG code 23514 (check_violation) to be recognized as insufficient funds error")
+	}
+
+	// ADR-16 regression guard: classification must survive %w wrapping, e.g. a
+	// check violation surfaced through RecordEntriesAndCommit's fmt.Errorf.
+	wrappedCheckViolation := fmt.Errorf("transaction commit failed: %w", &pq.Error{Code: "23514"})
+	if !IsInsufficientFundsError(wrappedCheckViolation) {
+		t.Errorf("Expected wrapped 23514 to be recognized as insufficient funds error (ADR-16 chain traversal)")
+	}
+
+	wrappedSerialization := fmt.Errorf("commit failed: %w", &pq.Error{Code: "40001"})
+	retriable, isDeadlock := IsRetriableError(wrappedSerialization)
+	if !retriable || isDeadlock {
+		t.Errorf("Expected wrapped 40001 to be retriable non-deadlock: got retriable=%v, isDeadlock=%v", retriable, isDeadlock)
+	}
+
+	wrappedLockTimeout := fmt.Errorf("step failed: %w", &pq.Error{Code: "55P03"})
+	retriable, isDeadlock = IsRetriableError(wrappedLockTimeout)
+	if !retriable || !isDeadlock {
+		t.Errorf("Expected wrapped 55P03 to be retriable deadlock: got retriable=%v, isDeadlock=%v", retriable, isDeadlock)
 	}
 
 	otherErr := errors.New("some random error")

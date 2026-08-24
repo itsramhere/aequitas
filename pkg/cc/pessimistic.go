@@ -3,11 +3,12 @@ package cc
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/lib/pq"
 	"github.com/ledger/skewed-ledger/pkg/ledger"
+	"github.com/lib/pq"
 )
 
 type PessimisticStrategy struct {
@@ -29,12 +30,14 @@ func (s *PessimisticStrategy) IsolationLevel() sql.IsolationLevel {
 	return sql.LevelReadCommitted
 }
 
-// IsDeadlockOrLockTimeout returns true if the error is a Postgres deadlock (40P01) or lock timeout (55P03/57014)
+// IsDeadlockOrLockTimeout returns true if the error is a Postgres deadlock (40P01) or lock timeout (55P03/57014).
+// errors.As traverses wrapped chains per ADR-16.
 func IsDeadlockOrLockTimeout(err error) bool {
 	if err == nil {
 		return false
 	}
-	if pqErr, ok := err.(*pq.Error); ok {
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
 		// 40P01 = deadlock_detected
 		// 55P03 = lock_not_available
 		// 57014 = statement_timeout (which triggers when lock wait times out under lock_timeout)
@@ -56,10 +59,17 @@ func (s *PessimisticStrategy) ExecuteTransfer(ctx context.Context, db *sql.DB, p
 	}
 	defer tx.Rollback()
 
+	// dbStart marks the beginning of the full in-transaction window (including
+	// lock waits), so DBLatency is comparable across all CC strategies.
+	dbStart := time.Now()
+
 	// Set session lock timeout to avoid indefinite blocking
 	_, err = tx.ExecContext(ctx, fmt.Sprintf("SET LOCAL lock_timeout = '%s'", s.LockTimeout))
 	if err != nil {
 		return nil, fmt.Errorf("failed to set lock_timeout: %w", err)
+	}
+	if err := applyStatementTimeout(ctx, tx, opts); err != nil {
+		return nil, err
 	}
 
 	// Step 1: Execute and time the SELECT ... FOR UPDATE statements (CC Wait phase)
@@ -89,9 +99,6 @@ func (s *PessimisticStrategy) ExecuteTransfer(ctx context.Context, db *sql.DB, p
 
 	ccWaitDuration := time.Since(ccWaitStart)
 
-	// Step 2: Time the actual UPDATE and COMMIT statements (DB Execution phase)
-	dbExecStart := time.Now()
-
 	// Identify debited account balance for sufficiency check
 	debitedBalance := firstBalance
 	if params.DebitedAccountID == secondID {
@@ -120,9 +127,12 @@ func (s *PessimisticStrategy) ExecuteTransfer(ctx context.Context, db *sql.DB, p
 		return nil, err
 	}
 
-	dbExecDuration := time.Since(dbExecStart)
+	// DBLatency covers the full in-transaction window (lock waits included) so
+	// it is directly comparable with OCC/SSI; CCWaitLatency isolates the lock
+	// acquisition sub-phase as the strategy-specific component.
+	dbDuration := time.Since(dbStart)
 	totalDuration := time.Since(start)
-	appDuration := totalDuration - dbExecDuration - ccWaitDuration
+	appDuration := totalDuration - dbDuration
 	if appDuration < 0 {
 		appDuration = 0
 	}
@@ -134,7 +144,7 @@ func (s *PessimisticStrategy) ExecuteTransfer(ctx context.Context, db *sql.DB, p
 		Status:         "committed",
 		Attempts:       1,
 		AppLatency:     appDuration,
-		DBLatency:      dbExecDuration,
+		DBLatency:      dbDuration,
 		CCWaitLatency:  ccWaitDuration,
 		WALWaitProxy:   walWaitProxy,
 		IsCached:       false,

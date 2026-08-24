@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/ledger/skewed-ledger/pkg/ledger"
@@ -23,6 +24,17 @@ type UnifiedRetryController struct {
 	MaxAttempts int
 	BaseBackoff time.Duration
 	MaxBackoff  time.Duration
+	// OnRetriableAttempt, if set, is invoked once for every in-flight retriable
+	// attempt failure (i.e. per attempt, not per client-visible failure). This
+	// feeds live abort signals to consumers such as the adaptive strategy's
+	// sliding window (ADR-05/ADR-18).
+	OnRetriableAttempt func()
+
+	// Worker-local PRNGs eliminated global math/rand contention in the workload
+	// generator (ADR-21); the retry controller's jitter draw was the one
+	// remaining shared-mutex caller, so it now owns a dedicated PRNG.
+	rng *rand.Rand
+	mu  sync.Mutex
 }
 
 func NewUnifiedRetryController(maxAttempts int, baseBackoff, maxBackoff time.Duration) *UnifiedRetryController {
@@ -39,10 +51,22 @@ func NewUnifiedRetryController(maxAttempts int, baseBackoff, maxBackoff time.Dur
 		MaxAttempts: maxAttempts,
 		BaseBackoff: baseBackoff,
 		MaxBackoff:  maxBackoff,
+		rng:         rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
-// IsInsufficientFundsError checks if the error is an application-level insufficient funds error or PG check_violation (23514)
+// jitterSleep computes backoff/2 + uniform[0, backoff/2] using the
+// controller-owned PRNG (no shared global rand mutex).
+func (c *UnifiedRetryController) jitterSleep(backoff time.Duration) time.Duration {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	jitter := time.Duration(c.rng.Int63n(int64(backoff)/2 + 1))
+	return backoff/2 + jitter
+}
+
+// IsInsufficientFundsError checks if the error is an application-level insufficient funds error or PG check_violation (23514).
+// errors.As traverses wrapped chains per ADR-16, so classification survives
+// fmt.Errorf("%w") wrapping by any layer between Postgres and this check.
 func IsInsufficientFundsError(err error) bool {
 	if err == nil {
 		return false
@@ -50,7 +74,8 @@ func IsInsufficientFundsError(err error) bool {
 	if errors.Is(err, ledger.ErrInsufficientFunds) {
 		return true
 	}
-	if pqErr, ok := err.(*pq.Error); ok {
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
 		// 23514 = check_violation
 		if pqErr.Code == "23514" {
 			return true
@@ -127,14 +152,20 @@ func (c *UnifiedRetryController) ExecuteWithRetry(
 			return nil, stats, err
 		}
 
+		// Per-attempt abort signal: surfaced even when a subsequent retry
+		// succeeds, so abort-ratio consumers see true contention, not just
+		// client-visible exhaustion.
+		if c.OnRetriableAttempt != nil {
+			c.OnRetriableAttempt()
+		}
+
 		if attempt < c.MaxAttempts {
-			// Compute exponential backoff with jitter
+			// Exponential backoff with jitter, drawn from the controller-owned PRNG
 			backoff := c.BaseBackoff * time.Duration(1<<(attempt-1))
 			if backoff > c.MaxBackoff {
 				backoff = c.MaxBackoff
 			}
-			jitter := time.Duration(rand.Int63n(int64(backoff)/2 + 1))
-			sleepTime := backoff/2 + jitter
+			sleepTime := c.jitterSleep(backoff)
 
 			select {
 			case <-ctx.Done():

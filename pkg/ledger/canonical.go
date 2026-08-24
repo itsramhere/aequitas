@@ -2,6 +2,7 @@ package ledger
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -44,13 +45,25 @@ func RecordEntriesAndCommit(tx *sql.Tx, params TransferParams, enableStageA bool
 		return uuid.Nil, 0, fmt.Errorf("failed to insert credit entry: %w", err)
 	}
 
-	// Step 5: Update idempotency key to 'committed' if Stage A was executed
+	// Step 5: Update idempotency key to 'committed' if Stage A was executed.
+	// The response payload is persisted in the same statement so that key state
+	// and cached result become visible atomically at commit — a later duplicate
+	// can never observe a committed key with a missing payload.
 	if enableStageA {
+		payload, marshalErr := json.Marshal(TxResult{
+			TransactionID:  txID,
+			ClientID:       params.ClientID,
+			IdempotencyKey: params.IdempotencyKey,
+			Status:         "committed",
+		})
+		if marshalErr != nil {
+			return uuid.Nil, 0, fmt.Errorf("failed to marshal response payload: %w", marshalErr)
+		}
 		res, err := tx.Exec(`
 			UPDATE idempotency_keys
-			SET state = 'committed', updated_at = CURRENT_TIMESTAMP
+			SET state = 'committed', response_payload = $3, updated_at = CURRENT_TIMESTAMP
 			WHERE client_id = $1 AND idempotency_key = $2 AND state = 'pending'
-		`, params.ClientID, params.IdempotencyKey)
+		`, params.ClientID, params.IdempotencyKey, payload)
 		if err != nil {
 			return uuid.Nil, 0, fmt.Errorf("failed to update idempotency key state: %w", err)
 		}

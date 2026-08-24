@@ -8,8 +8,8 @@ import (
 	"log"
 	"os"
 
-	_ "github.com/lib/pq"
 	"github.com/ledger/skewed-ledger/pkg/auditor"
+	_ "github.com/lib/pq"
 )
 
 func main() {

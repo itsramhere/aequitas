@@ -6,12 +6,16 @@ import (
 	"sync/atomic"
 )
 
+// ZipfGenerator holds the exact cumulative Zipf(pmf ~ 1/i^theta) distribution
+// over [1, numAccounts]. The cumulative mass table is computed once (finite
+// population, so any theta >= 0 — including exactly 1.0 — is well defined) and
+// sampled by exact binary-search inversion. This replaces the approximate
+// theta < 1 power-law formula, which silently rewrote theta = 1.0 to 0.9999
+// and mislabelled the corresponding benchmark cells.
 type ZipfGenerator struct {
 	numAccounts int64
 	theta       float64
-	zetaN       float64
-	alpha       float64
-	eta         float64
+	cumulative  []float64 // cumulative[i] = P(X <= i+1), 0-indexed
 	hottestHits int64
 	totalGen    int64
 }
@@ -20,62 +24,70 @@ func NewZipfGenerator(numAccounts int64, theta float64) *ZipfGenerator {
 	if numAccounts <= 0 {
 		numAccounts = 10000
 	}
-
-	// Avoid 1.0 / (1.0 - theta) division-by-zero singularity when theta == 1.0
-	if math.Abs(theta-1.0) < 1e-5 {
-		theta = 0.9999
+	if theta < 0 {
+		theta = 0
 	}
 
 	g := &ZipfGenerator{
 		numAccounts: numAccounts,
 		theta:       theta,
+		cumulative:  make([]float64, numAccounts),
 	}
 
-	if theta > 0.0 {
-		g.zetaN = g.computeZeta(numAccounts, theta)
-		zeta2 := g.computeZeta(2, theta)
-		g.alpha = 1.0 / (1.0 - theta)
-		g.eta = (1.0 - math.Pow(2.0/float64(numAccounts), 1.0-theta)) / (1.0 - zeta2/g.zetaN)
+	sum := 0.0
+	for i := int64(1); i <= numAccounts; i++ {
+		sum += 1.0 / math.Pow(float64(i), theta)
+		g.cumulative[i-1] = sum
+	}
+	// Normalize so cumulative[N-1] == 1 exactly (guards float drift).
+	for i := range g.cumulative {
+		g.cumulative[i] /= sum
 	}
 
 	return g
 }
 
-func (g *ZipfGenerator) computeZeta(n int64, theta float64) float64 {
-	sum := 0.0
-	for i := int64(1); i <= n; i++ {
-		sum += 1.0 / math.Pow(float64(i), theta)
+// NewSampler returns a worker-local sampler with its own PRNG, eliminating the
+// shared math/rand global mutex as a source of artificial client-side
+// contention at high concurrency. Hot-row hit accounting stays on the shared
+// generator via atomic counters.
+func (g *ZipfGenerator) NewSampler(seed int64) *ZipfSampler {
+	return &ZipfSampler{
+		gen: g,
+		rnd: rand.New(rand.NewSource(seed)),
 	}
-	return sum
 }
 
-// NextAccountID returns a 1-indexed account ID following the Zipfian distribution
-func (g *ZipfGenerator) NextAccountID() int64 {
-	atomic.AddInt64(&g.totalGen, 1)
+type ZipfSampler struct {
+	gen *ZipfGenerator
+	rnd *rand.Rand
+}
+
+// NextAccountID returns a 1-indexed account ID drawn from the exact Zipf
+// distribution via binary-search inversion of the cumulative table.
+func (s *ZipfSampler) NextAccountID() int64 {
+	atomic.AddInt64(&s.gen.totalGen, 1)
 
 	var id int64
-	if g.theta <= 0.0 {
-		id = rand.Int63n(g.numAccounts) + 1
+	if s.gen.theta == 0 {
+		id = s.rnd.Int63n(s.gen.numAccounts) + 1
 	} else {
-		u := rand.Float64()
-		uz := u * g.zetaN
-
-		if uz < 1.0 {
-			id = 1
-		} else if uz < 1.0+math.Pow(0.5, g.theta) {
-			id = 2
-		} else {
-			id = 1 + int64(float64(g.numAccounts)*math.Pow(g.eta*u-g.eta+1.0, g.alpha))
-			if id < 1 {
-				id = 1
-			} else if id > g.numAccounts {
-				id = g.numAccounts
+		u := s.rnd.Float64()
+		// Lower bound: smallest i with cumulative[i-1] >= u  (i is 1-indexed).
+		lo, hi := int64(0), s.gen.numAccounts-1
+		for lo < hi {
+			mid := (lo + hi) / 2
+			if s.gen.cumulative[mid] < u {
+				lo = mid + 1
+			} else {
+				hi = mid
 			}
 		}
+		id = lo + 1
 	}
 
 	if id == 1 {
-		atomic.AddInt64(&g.hottestHits, 1)
+		atomic.AddInt64(&s.gen.hottestHits, 1)
 	}
 
 	return id

@@ -46,16 +46,22 @@ func (c *TTLCleaner) Start(ctx context.Context) {
 
 func (c *TTLCleaner) cleanStalePendingKeys(ctx context.Context) {
 	cutoff := time.Now().Add(-c.pendingTTL)
+	// Transition expired pending keys to the terminal 'failed' state instead of
+	// deleting them. A hard DELETE would allow a duplicate request to insert a
+	// fresh 'pending' row that a still-in-flight Stage B could then match,
+	// double-applying the transfer. With a state transition, any late Stage B
+	// commit attempt matches 0 rows and aborts, preserving at-most-once.
 	res, err := c.db.ExecContext(ctx, `
-		DELETE FROM idempotency_keys
-		WHERE state = 'pending' AND created_at < $1
+		UPDATE idempotency_keys
+		SET state = 'failed', updated_at = CURRENT_TIMESTAMP
+		WHERE state = 'pending' AND GREATEST(created_at, updated_at) < $1
 	`, cutoff)
 	if err != nil {
-		log.Printf("[TTL Cleaner Error] Failed to delete stale pending keys: %v", err)
+		log.Printf("[TTL Cleaner Error] Failed to expire stale pending keys: %v", err)
 		return
 	}
 	rows, err := res.RowsAffected()
 	if err == nil && rows > 0 {
-		log.Printf("[TTL Cleaner] Cleaned %d stale pending idempotency key(s)", rows)
+		log.Printf("[TTL Cleaner] Transitioned %d stale pending idempotency key(s) to 'failed'", rows)
 	}
 }

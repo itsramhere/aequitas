@@ -9,12 +9,12 @@ import (
 
 // Standard Ledger Errors
 var (
-	ErrInsufficientFunds     = errors.New("insufficient funds for transfer")
-	ErrAccountNotFound       = errors.New("one or both accounts not found")
-	ErrVersionMismatch       = errors.New("optimistic concurrency version mismatch")
+	ErrInsufficientFunds    = errors.New("insufficient funds for transfer")
+	ErrAccountNotFound      = errors.New("one or both accounts not found")
+	ErrVersionMismatch      = errors.New("optimistic concurrency version mismatch")
 	ErrProcessingRetryLater = errors.New("request currently processing, retry later")
-	ErrSameAccountTransfer   = errors.New("debited and credited accounts must be distinct")
-	ErrInvalidAmount         = errors.New("transfer amount must be positive")
+	ErrSameAccountTransfer  = errors.New("debited and credited accounts must be distinct")
+	ErrInvalidAmount        = errors.New("transfer amount must be positive")
 )
 
 type IdempotencyState string

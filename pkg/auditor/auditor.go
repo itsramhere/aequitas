@@ -8,12 +8,13 @@ import (
 )
 
 type AuditReport struct {
-	InitialAccountBalance    float64 `json:"initial_account_balance"`
-	TotalAccountsChecked     int64   `json:"total_accounts_checked"`
-	BalanceDiscrepancyCount  int64   `json:"balance_discrepancy_count"`
-	TotalCommittedKeys       int64   `json:"total_committed_keys"`
-	DuplicateEffectCount     int64   `json:"duplicate_effect_count"`
-	Passed                   bool    `json:"passed"`
+	InitialAccountBalance   float64 `json:"initial_account_balance"`
+	TotalAccountsChecked    int64   `json:"total_accounts_checked"`
+	BalanceDiscrepancyCount int64   `json:"balance_discrepancy_count"`
+	TotalCommittedKeys      int64   `json:"total_committed_keys"`
+	DuplicateEffectCount    int64   `json:"duplicate_effect_count"`
+	MissingTransactionCount int64   `json:"missing_transaction_count"`
+	Passed                  bool    `json:"passed"`
 }
 
 type Auditor struct {
@@ -73,7 +74,9 @@ func (a *Auditor) RunAudit(ctx context.Context, initialBalance float64) (*AuditR
 
 	// -------------------------------------------------------------
 	// Check 2: Idempotency-Key-to-Entry-Set Cardinality Check
-	// Verifies that every committed idempotency key maps to EXACTLY ONE transaction
+	// Scoped to (client_id, idempotency_key) — the actual uniqueness domain —
+	// verifying both directions: no key produced more than one transaction,
+	// and every committed key produced exactly one transaction.
 	// -------------------------------------------------------------
 	err = a.db.QueryRowContext(ctx, `
 		SELECT COUNT(*) FROM idempotency_keys WHERE state = 'committed'
@@ -85,9 +88,9 @@ func (a *Auditor) RunAudit(ctx context.Context, initialBalance float64) (*AuditR
 	var duplicateKeys int64
 	err = a.db.QueryRowContext(ctx, `
 		SELECT COUNT(*) FROM (
-			SELECT idempotency_key, COUNT(DISTINCT id) AS tx_count
+			SELECT client_id, idempotency_key, COUNT(DISTINCT id) AS tx_count
 			FROM transactions
-			GROUP BY idempotency_key
+			GROUP BY client_id, idempotency_key
 			HAVING COUNT(DISTINCT id) > 1
 		) duplicates
 	`).Scan(&duplicateKeys)
@@ -95,17 +98,37 @@ func (a *Auditor) RunAudit(ctx context.Context, initialBalance float64) (*AuditR
 		return nil, fmt.Errorf("idempotency cardinality check query failed: %w", err)
 	}
 
+	// Converse direction: committed keys with zero matching transactions
+	// (a committed key without its ledger effect).
+	var missingTxns int64
+	err = a.db.QueryRowContext(ctx, `
+		SELECT COUNT(*) FROM idempotency_keys k
+		WHERE k.state = 'committed'
+		  AND NOT EXISTS (
+			SELECT 1 FROM transactions t
+			WHERE t.client_id = k.client_id AND t.idempotency_key = k.idempotency_key
+		  )
+	`).Scan(&missingTxns)
+	if err != nil {
+		return nil, fmt.Errorf("idempotency missing-transaction check query failed: %w", err)
+	}
+
 	report.DuplicateEffectCount = duplicateKeys
+	report.MissingTransactionCount = missingTxns
 	if duplicateKeys > 0 {
 		report.Passed = false
-		log.Printf("[AUDIT ERROR] Idempotency violation: %d committed key(s) produced duplicate transactions!", duplicateKeys)
+		log.Printf("[AUDIT ERROR] Idempotency violation: %d key(s) produced duplicate transactions!", duplicateKeys)
+	}
+	if missingTxns > 0 {
+		report.Passed = false
+		log.Printf("[AUDIT ERROR] Idempotency violation: %d committed key(s) have no corresponding transaction!", missingTxns)
 	}
 
 	if report.Passed {
 		log.Println("=== AUDIT PASSED: Balance reconciliation & Idempotency cardinality verified cleanly. ===")
 	} else {
-		log.Printf("=== AUDIT FAILED: Discrepancies=%d, DuplicateEffects=%d ===",
-			report.BalanceDiscrepancyCount, report.DuplicateEffectCount)
+		log.Printf("=== AUDIT FAILED: Discrepancies=%d, DuplicateEffects=%d, MissingTransactions=%d ===",
+			report.BalanceDiscrepancyCount, report.DuplicateEffectCount, report.MissingTransactionCount)
 	}
 
 	return report, nil

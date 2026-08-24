@@ -1,6 +1,7 @@
 package telemetry
 
 import (
+	"math"
 	"sort"
 	"time"
 )
@@ -26,6 +27,7 @@ type CellMetricsReport struct {
 	CommittedTxns          int64              `json:"committed_txns"`
 	ClientVisibleFailures  int64              `json:"client_visible_failures"`
 	CollisionRejections    int64              `json:"collision_rejections"`
+	CachedHits             int64              `json:"cached_hits"`
 	InternalRetries        int64              `json:"internal_retries"`
 	DeadlockCount          int64              `json:"deadlock_count"`
 	InsufficientFundsCount int64              `json:"insufficient_funds_count"`
@@ -45,6 +47,9 @@ type CellMetricsReport struct {
 	TimeSeries             []TimeSeriesPoint  `json:"time_series"`
 }
 
+// CalculatePercentiles returns nearest-rank percentiles (ceil(p*n)-1), the
+// standard order-statistic definition. The previous floor(p*n/100) indexing
+// was systematically off by one rank.
 func CalculatePercentiles(durations []time.Duration) LatencyPercentiles {
 	if len(durations) == 0 {
 		return LatencyPercentiles{}
@@ -55,9 +60,20 @@ func CalculatePercentiles(durations []time.Duration) LatencyPercentiles {
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i] < sorted[j] })
 
 	n := len(sorted)
+	rank := func(p float64) time.Duration {
+		idx := int(math.Ceil(p*float64(n))) - 1
+		if idx < 0 {
+			idx = 0
+		}
+		if idx >= n {
+			idx = n - 1
+		}
+		return sorted[idx]
+	}
+
 	return LatencyPercentiles{
-		P50: sorted[n*50/100],
-		P95: sorted[n*95/100],
-		P99: sorted[n*99/100],
+		P50: rank(0.50),
+		P95: rank(0.95),
+		P99: rank(0.99),
 	}
 }

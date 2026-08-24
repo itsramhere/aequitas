@@ -24,6 +24,10 @@ Write-Host "Found $($jsonFiles.Count) JSON files. Consolidating into '$OutputFil
 # Build entire Markdown output in memory using StringBuilder
 $sb = [System.Text.StringBuilder]::new()
 [void]$sb.AppendLine("# Benchmark Raw Data Archive")
+[void]$sb.AppendLine()
+[void]$sb.AppendLine("_Generated: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC by consolidate_results.ps1._")
+[void]$sb.AppendLine()
+[void]$sb.AppendLine("_Note: result files were captured by different instrument versions over the life of this project (e.g. older files carry ``abort_retry_rate_pct`` while current code emits ``retries_per_request``/``client_failure_rate_pct``). Field sets are NOT uniform across files; check each JSON's fields before cross-file comparison._")
 
 foreach ($file in $jsonFiles) {
     # Compute relative path (e.g., results\set1\OCC_skew_0.8_conc_50.json)

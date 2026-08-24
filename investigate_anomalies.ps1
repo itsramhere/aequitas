@@ -1,6 +1,8 @@
 # investigate_anomalies.ps1
 
-$OutputDir = ".\results\set2"
+# Isolation runs go to the investigation directory, never into results\set2,
+# so primary experiment data is not contaminated with diagnostic runs.
+$OutputDir = ".\results\set2_investigation"
 if (-not (Test-Path -Path $OutputDir)) {
     New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 }

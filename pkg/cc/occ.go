@@ -36,7 +36,14 @@ func (s *OCCStrategy) ExecuteTransfer(ctx context.Context, db *sql.DB, params le
 	}
 	defer tx.Rollback()
 
+	// dbStart marks the beginning of the full in-transaction window — including
+	// the applyStatementTimeout SET round-trip below — matching Pessimistic so
+	// DBLatency remains comparable across strategies (ADR-14).
 	dbStart := time.Now()
+
+	if err := applyStatementTimeout(ctx, tx, opts); err != nil {
+		return nil, err
+	}
 
 	// Step 1: Read debited account balance and version (plain SELECT, no locks)
 	var debitedBalance float64

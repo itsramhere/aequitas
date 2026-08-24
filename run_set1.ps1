@@ -1,5 +1,5 @@
 # Create output directory for results
-New-Item -ItemType Directory -Force -Path ".\results\set1Rerun" | Out-Null
+New-Item -ItemType Directory -Force -Path ".\results\set1" | Out-Null
 
 $strategies = @("SSI", "PESSIMISTIC", "OCC")
 $skews = @(0.0, 0.4, 0.6, 0.8, 1.0, 1.2)

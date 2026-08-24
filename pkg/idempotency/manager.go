@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 
-	"github.com/lib/pq"
 	"github.com/ledger/skewed-ledger/pkg/cc"
 	"github.com/ledger/skewed-ledger/pkg/ledger"
+	"github.com/lib/pq"
 )
 
 type IdempotencyManager struct {
@@ -47,7 +48,8 @@ func (m *IdempotencyManager) ProcessTransfer(
 
 	if err != nil {
 		stageATx.Rollback()
-		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" { // unique_violation
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" { // unique_violation (ADR-16: chain traversal)
 			// Idempotency key already exists -> check collision policy
 			var state ledger.IdempotencyState
 			var payload []byte
@@ -62,10 +64,20 @@ func (m *IdempotencyManager) ProcessTransfer(
 			}
 
 			if state == ledger.StateCommitted {
-				// Request already executed successfully -> return cached result
+				// Request already executed successfully -> return cached result.
+				// The payload is persisted inside Stage B (same transaction as the
+				// transfer commit), so a committed key always carries a payload.
+				// If it is somehow empty, return a minimal committed marker rather
+				// than a fabricated zero-value result.
 				var cachedResult ledger.TxResult
 				if len(payload) > 0 {
 					_ = json.Unmarshal(payload, &cachedResult)
+				} else {
+					cachedResult = ledger.TxResult{
+						ClientID:       params.ClientID,
+						IdempotencyKey: params.IdempotencyKey,
+						Status:         "committed",
+					}
 				}
 				cachedResult.IsCached = true
 				return &cachedResult, &cc.RetryStats{}, nil
@@ -76,7 +88,27 @@ func (m *IdempotencyManager) ProcessTransfer(
 				return nil, nil, ledger.ErrProcessingRetryLater
 			}
 
-			// If state is failed, allow fresh re-execution by falling through
+			// state == 'failed': allow re-execution by atomically claiming the key
+			// (failed -> pending). The CAS guard ensures exactly one retryer wins;
+			// concurrent retryers lose the race and are told to retry later.
+			res, claimErr := m.db.ExecContext(ctx, `
+				UPDATE idempotency_keys
+				SET state = 'pending', updated_at = CURRENT_TIMESTAMP
+				WHERE client_id = $1 AND idempotency_key = $2 AND state = 'failed'
+			`, params.ClientID, params.IdempotencyKey)
+			if claimErr != nil {
+				// Transient contention on the key row (lock timeout / deadlock)
+				// is a retry-later condition, not a client-visible failure: the
+				// claim is atomic, so no state changed and no effect exists.
+				// Permanent errors keep their identity and fail loudly.
+				if retriable, _ := cc.IsRetriableError(claimErr); retriable {
+					return nil, nil, ledger.ErrProcessingRetryLater
+				}
+				return nil, nil, fmt.Errorf("failed to reclaim failed idempotency key: %w", claimErr)
+			}
+			if rows, rowsErr := res.RowsAffected(); rowsErr != nil || rows == 0 {
+				return nil, nil, ledger.ErrProcessingRetryLater
+			}
 		} else {
 			return nil, nil, fmt.Errorf("Stage A insert failed: %w", err)
 		}
@@ -98,14 +130,21 @@ func (m *IdempotencyManager) ProcessTransfer(
 		return nil, stats, err
 	}
 
-	// Store serialized cached result payload in Stage B completion
-	if payload, marshalErr := json.Marshal(result); marshalErr == nil {
+	// Business rejection (ADR-07/ADR-17 revision): the retry controller reports
+	// insufficient funds as a successful result (nil error), so without this
+	// transition the key would linger in 'pending' — blocking duplicates with
+	// 429s until TTL expiry. No ledger effect exists, so the key moves to the
+	// terminal 'failed' state and later retries may re-claim it.
+	if result != nil && result.Status == "insufficient_funds" {
 		_, _ = m.db.ExecContext(ctx, `
 			UPDATE idempotency_keys 
-			SET response_payload = $1 
-			WHERE client_id = $2 AND idempotency_key = $3
-		`, payload, params.ClientID, params.IdempotencyKey)
+			SET state = 'failed', updated_at = CURRENT_TIMESTAMP 
+			WHERE client_id = $1 AND idempotency_key = $2 AND state = 'pending'
+		`, params.ClientID, params.IdempotencyKey)
 	}
 
+	// The cached response payload is persisted inside the Stage B transaction
+	// itself (see ledger.RecordEntriesAndCommit), so key state, ledger entries,
+	// and response payload all flip atomically at commit.
 	return result, stats, nil
 }
